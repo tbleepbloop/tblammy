@@ -17,7 +17,7 @@
       overflow: hidden; /* Prevents scrollbars */
       opacity: 0; /* Start invisible */
       animation: fadeIn 2s forwards; /* Fade in effect */
-      position: relative; /* Establishes positioning context for pseudo-element */
+      position: relative; /* Position context for pseudo-element */
     }
 
     /* Styling for the "Hello" text */
@@ -37,13 +37,9 @@
       left: 0;
       width: 200%; /* Wider than the viewport to allow smooth movement */
       height: 100%;
-      /* 
-         Replace the URL below with your own cloud image if needed.
-         The image should tile seamlessly horizontally.
-      */
       background: url('images/11570245.png') repeat-x;
-      opacity: 0.5; /* Makes the clouds semi-transparent */
-      z-index: 1; /* Places clouds behind the text */
+      opacity: 0.8; /* Temporarily increased opacity for testing */
+      z-index: 1;
       animation: moveClouds 60s linear infinite;
     }
 
@@ -56,7 +52,7 @@
     /* Animation to move the clouds from left to right */
     @keyframes moveClouds {
       from { transform: translateX(0); }
-      to   { transform: translateX(50%); }
+      to   { transform: translateX(100%); } /* Increased movement range for testing */
     }
   </style>
 </head>
