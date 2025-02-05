@@ -71,7 +71,9 @@
       background: url('images/—Pngtree—cartoon clouds baiyun cloud cloud_6227819.png') no-repeat left center;
       opacity: 1;
       z-index: 2; /* Over the buttons but under the "Hello" text */
-      animation: moveClouds 20s linear forwards; /* 20s duration, runs once */
+      /* 20s total duration; 'forwards' so the final state persists.
+         The cubic-bezier function helps simulate acceleration after 2 seconds. */
+      animation: moveClouds 20s cubic-bezier(0, 0, 0.5, 1) forwards;
     }
 
     /* Fade-in animation for the page */
@@ -80,10 +82,15 @@
       to   { opacity: 1; }
     }
 
-    /* Animation for moving the cloud once from left to right */
+    /* Animation for moving the cloud once from left to right:
+       - 0% to 5% (first 1 second): stationary.
+       - 5% to 10% (next 1 second): moves very slowly (only a tiny shift).
+       - 10% to 100% (after 2 seconds): accelerates to finish at 100% translation. */
     @keyframes moveClouds {
-      from { transform: translateX(0%); } /* Start further left */
-      to   { transform: translateX(100%); }  /* End off to the right */
+      0%   { transform: translateX(0%); }
+      5%   { transform: translateX(0%); }
+      10%  { transform: translateX(2%); }
+      100% { transform: translateX(100%); }
     }
   </style>
 </head>
