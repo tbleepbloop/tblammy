@@ -11,6 +11,7 @@
       padding: 0;
       background-color: #FFC0CB; /* Pinkish background */
       display: flex;
+      flex-direction: column; /* Stack elements vertically */
       justify-content: center;
       align-items: center;
       height: 100vh;
@@ -26,7 +27,35 @@
       font-size: 3em;
       font-family: Arial, sans-serif;
       position: relative;
-      z-index: 2; /* Ensure text appears above the clouds */
+      z-index: 3; /* On top of the cloud */
+      margin: 0;
+    }
+
+    /* Container for the buttons */
+    .button-container {
+      margin-top: 20px;
+      display: flex;
+      gap: 20px;
+      position: relative;
+      z-index: 0; /* Buttons will be below the moving cloud */
+    }
+
+    /* Styling for the bubbly buttons */
+    .btn {
+      background-color: #8B0000; /* Deep dark red */
+      color: #fff; /* White text */
+      border: none;
+      border-radius: 25px; /* Bubbly rounded look */
+      padding: 10px 20px;
+      font-size: 1.2em;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 8px rgba(0, 0, 0, 0.4);
     }
 
     /* Pseudo-element for the moving clouds */
@@ -35,12 +64,12 @@
       position: absolute;
       top: 0;
       left: 0;
-      width: 200%; /* Wider than the viewport to allow smooth movement */
+      width: 200%; /* Wider than the viewport for smooth movement */
       height: 100%;
       background: url('images/—Pngtree—cartoon clouds baiyun cloud cloud_6227819.png') repeat-x;
-      opacity: 0.8; /* Temporarily increased opacity for testing */
-      z-index: 1;
-      animation: moveClouds 60s linear infinite;
+      opacity: 0.8;
+      z-index: 2; /* Positioned between the "Hello" text and the buttons */
+      animation: moveClouds 20s linear infinite; /* Faster movement: 20 seconds per cycle */
     }
 
     /* Fade-in animation for the page */
@@ -52,11 +81,15 @@
     /* Animation to move the clouds from left to right */
     @keyframes moveClouds {
       from { transform: translateX(0); }
-      to   { transform: translateX(100%); } /* Increased movement range for testing */
+      to   { transform: translateX(100%); }
     }
   </style>
 </head>
 <body>
   <h1>Hello</h1>
+  <div class="button-container">
+    <button class="btn highscore">Highscore</button>
+    <button class="btn play">Play</button>
+  </div>
 </body>
 </html>
