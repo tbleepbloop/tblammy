@@ -17,7 +17,7 @@
       height: 100vh;
       overflow: hidden; /* Prevents scrollbars */
       opacity: 0; /* Start invisible */
-      animation: fadeIn 2s forwards; /* Fade in effect */
+      animation: fadeIn 2s forwards; /* Fade-in effect */
       position: relative; /* Position context for pseudo-element */
     }
 
@@ -37,7 +37,7 @@
       display: flex;
       gap: 20px;
       position: relative;
-      z-index: 0; /* Buttons will be below the moving cloud */
+      z-index: 0; /* Initially below the cloud */
     }
 
     /* Styling for the bubbly buttons */
@@ -51,6 +51,8 @@
       cursor: pointer;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
       transition: transform 0.2s, box-shadow 0.2s;
+      width: 150px;      /* Fixed width for same size buttons */
+      text-align: center; /* Center the button text */
     }
 
     .btn:hover {
@@ -58,18 +60,18 @@
       box-shadow: 0 6px 8px rgba(0, 0, 0, 0.4);
     }
 
-    /* Pseudo-element for the moving clouds */
+    /* Pseudo-element for the moving cloud */
     body::before {
       content: "";
       position: absolute;
       top: 0;
       left: 0;
-      width: 200%; /* Wider than the viewport for smooth movement */
+      width: 200%; /* Wider than the viewport */
       height: 100%;
-      background: url('images/—Pngtree—cartoon clouds baiyun cloud cloud_6227819.png') repeat-x;
+      background: url('images/—Pngtree—cartoon clouds baiyun cloud cloud_6227819.png') no-repeat left center;
       opacity: 0.8;
-      z-index: 2; /* Positioned between the "Hello" text and the buttons */
-      animation: moveClouds 20s linear infinite; /* Faster movement: 20 seconds per cycle */
+      z-index: 2; /* Over the buttons but under the "Hello" text */
+      animation: moveClouds 20s linear forwards; /* 20s duration, runs once */
     }
 
     /* Fade-in animation for the page */
@@ -78,18 +80,19 @@
       to   { opacity: 1; }
     }
 
-    /* Animation to move the clouds from left to right */
+    /* Animation for moving the cloud once from left to right */
     @keyframes moveClouds {
-      from { transform: translateX(0); }
-      to   { transform: translateX(100%); }
+      from { transform: translateX(-50%); } /* Start further left */
+      to   { transform: translateX(100%); }  /* End off to the right */
     }
   </style>
 </head>
 <body>
   <h1>Hello</h1>
   <div class="button-container">
-    <button class="btn highscore">Highscore</button>
+    <!-- Switched order: left button is "Play", right button is "Highscore" -->
     <button class="btn play">Play</button>
+    <button class="btn highscore">Highscore</button>
   </div>
 </body>
 </html>
