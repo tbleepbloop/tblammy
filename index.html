@@ -69,7 +69,7 @@
       width: 200%; /* Wider than the viewport */
       height: 100%;
       background: url('images/—Pngtree—cartoon clouds baiyun cloud cloud_6227819.png') no-repeat left center;
-      opacity: 0.8;
+      opacity: 1;
       z-index: 2; /* Over the buttons but under the "Hello" text */
       animation: moveClouds 20s linear forwards; /* 20s duration, runs once */
     }
@@ -82,7 +82,7 @@
 
     /* Animation for moving the cloud once from left to right */
     @keyframes moveClouds {
-      from { transform: translateX(-50%); } /* Start further left */
+      from { transform: translateX(0%); } /* Start further left */
       to   { transform: translateX(100%); }  /* End off to the right */
     }
   </style>
