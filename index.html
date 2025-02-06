@@ -11,6 +11,7 @@
       padding: 0;
       background: #FFC0CB;
       font-family: Arial, sans-serif;
+      overflow: hidden;
     }
     /* ---------- Menu & Controls Screens ---------- */
     #menu, #controlsScreen {
@@ -25,7 +26,7 @@
       align-items: center;
       z-index: 10;
     }
-    /* Menu large cloud animation */
+    /* Large cloud on menu screen (unchanged from before) */
     #menu::before {
       content: "";
       position: absolute;
@@ -76,10 +77,12 @@
       pointer-events: none;
       transition: opacity 1s;
     }
-    /* ---------- Canvas ---------- */
+    /* ---------- Full-Screen Canvas ---------- */
     #gameCanvas {
       display: none;
-      background: #FFC0CB;
+      position: absolute;
+      top: 0; left: 0;
+      /* Width and height will be set via JavaScript to fill the window */
     }
   </style>
 </head>
@@ -106,13 +109,13 @@
     <button id="backButton" class="btn">Back</button>
   </div>
   <!-- Game Canvas -->
-  <canvas id="gameCanvas" width="800" height="600"></canvas>
+  <canvas id="gameCanvas"></canvas>
   <!-- Fade Overlay -->
   <div id="fadeOverlay"></div>
 
   <script>
     /***********************
-     * Global Variables
+     * Global Variables & Setup
      ***********************/
     let gameState = "menu"; // "menu", "controls", "game"
     const menuDiv = document.getElementById("menu");
@@ -124,15 +127,23 @@
     const ctx = canvas.getContext("2d");
     const fadeOverlay = document.getElementById("fadeOverlay");
 
-    // Load images (all from the "images" folder)
+    // Set canvas to full screen
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+
+    // Load images (all from "images" folder)
     const hamsterImg = new Image();
     hamsterImg.src = "images/Pi7_cropper.png";
     const bossImg = new Image();
     bossImg.src = "images/gojospritefight.gif";
     const bossUltImg = new Image();
     bossUltImg.src = "images/gojoult.gif";
-    const backgroundImg = new Image();
-    backgroundImg.src = "images/—Pngtree—cartoon clouds baiyun cloud cloud_6227819.png";
+    const cloudImg = new Image();
+    cloudImg.src = "images/—Pngtree—cartoon clouds baiyun cloud cloud_6227819.png";
 
     // Game objects
     let hamster = { x: 100, y: 300, width: 50, height: 50, speed: 3 };
@@ -141,9 +152,20 @@
     let enemyProjectiles = [];
     let keysPressed = {};
     let bossUltTimer = 0;
-    let bgOffset = 0;  // For slow background movement
     let finalMessage = "";
     let finalMessageTimer = 0;
+    // For background clouds grid:
+    let bgOffset = 0;
+    const bgSpeed = 0.5;  // Faster than before
+    const rows = 10;
+    const cloudScale = 0.1; // 10x smaller
+    let cloudDrawWidth = 50, cloudDrawHeight = 50; // Default dimensions for scaled cloud
+
+    // Once the cloud image loads, compute scaled dimensions
+    cloudImg.onload = function() {
+      cloudDrawWidth = cloudImg.naturalWidth * cloudScale;
+      cloudDrawHeight = cloudImg.naturalHeight * cloudScale;
+    };
 
     /***********************
      * Menu & Controls Events
@@ -174,7 +196,6 @@
      * Transition to Game
      ***********************/
     function startGameTransition() {
-      // Fade to black
       menuDiv.style.display = "none";
       fadeOverlay.style.opacity = 1;
       setTimeout(() => {
@@ -189,7 +210,6 @@
      * Game Initialization & Loop
      ***********************/
     function initGame() {
-      // Reset game objects
       hamster.x = 100;
       hamster.y = 300;
       projectiles = [];
@@ -198,13 +218,12 @@
       bgOffset = 0;
       finalMessage = "";
       finalMessageTimer = 0;
-      // Start game loop
       requestAnimationFrame(gameLoop);
     }
 
     window.addEventListener("keydown", (e) => {
       keysPressed[e.key.toLowerCase()] = true;
-      if (e.key === " ") { // Space bar to shoot
+      if (e.key === " ") { // space bar to shoot
         shootProjectile();
       }
     });
@@ -213,7 +232,6 @@
     });
 
     function shootProjectile() {
-      // Create a green projectile from hamster's right side
       projectiles.push({
         x: hamster.x + hamster.width,
         y: hamster.y + hamster.height / 2 - 5,
@@ -231,44 +249,48 @@
     }
 
     function updateGame() {
-      // --- Update Background Movement ---
-      bgOffset -= 0.05; // very slow speed
-      if (bgOffset <= -canvas.width) bgOffset = 0;
+      // Update background offset (move clouds faster)
+      bgOffset -= bgSpeed;
+      if (bgOffset <= -cloudDrawWidth) {
+        bgOffset += cloudDrawWidth;
+      }
 
-      // --- Update Hamster Position ---
+      // Update hamster position
       if (keysPressed["w"]) hamster.y -= hamster.speed;
       if (keysPressed["a"]) hamster.x -= hamster.speed;
       if (keysPressed["s"]) hamster.y += hamster.speed;
       if (keysPressed["d"]) hamster.x += hamster.speed;
-      // Constrain hamster within canvas
       hamster.x = Math.max(0, Math.min(canvas.width - hamster.width, hamster.x));
       hamster.y = Math.max(0, Math.min(canvas.height - hamster.height, hamster.y));
 
-      // --- Update Hamster Projectiles ---
+      // Update hamster projectiles
       for (let i = projectiles.length - 1; i >= 0; i--) {
         projectiles[i].x += projectiles[i].speed;
         if (projectiles[i].x > canvas.width) projectiles.splice(i, 1);
       }
 
-      // --- Spawn Enemy (Boss) when Hamster reaches threshold ---
+      // Spawn enemy when hamster.x > 400 (if not already spawned)
       if (!enemy && hamster.x > 400) {
         spawnEnemy();
       }
 
-      // --- Update Enemy (if exists) ---
+      // Update enemy if exists
       if (enemy) {
-        // Instead of moving horizontally, enemy now only follows hamster vertically (with easing)
-        enemy.y += (hamster.y - enemy.y) * 0.05;
-
-        // Update enemy message timer (for text above enemy)
+        // Randomize enemy target y occasionally instead of strictly following hamster
+        if (!enemy.targetY || Math.random() < 0.02) {
+          enemy.targetY = hamster.y + (Math.random() * 100 - 50);
+        }
+        enemy.y += (enemy.targetY - enemy.y) * 0.05;
+        
+        // Update enemy message timer (displaying text above enemy)
         if (enemy.messageTimer > 0) {
           enemy.messageTimer--;
           if (enemy.messageTimer <= 0) enemy.message = null;
         }
-        // When enemy health drops to 5 or below, show boss ult overlay once
+        // When enemy health <= 5, display boss ult overlay once
         if (enemy.health <= 5 && !enemy.ultDisplayed) {
           enemy.ultDisplayed = true;
-          bossUltTimer = 120; // display ult for 2 seconds (assuming ~60 FPS)
+          bossUltTimer = 120; // display for about 2 seconds (assuming ~60 FPS)
         }
         // Enemy shooting timer
         enemy.shootTimer--;
@@ -276,16 +298,14 @@
           shootEnemyProjectile();
           enemy.shootTimer = 60;
         }
-        // Check collisions: hamster projectiles hitting enemy
+        // Check collision: hamster projectiles hitting enemy
         for (let i = projectiles.length - 1; i >= 0; i--) {
           if (rectIntersect(projectiles[i], enemy)) {
             enemy.health--;
             projectiles.splice(i, 1);
-            // If enemy dies, begin fade out
             if (enemy.health <= 0 && !enemy.fading) {
               enemy.fading = true;
               enemy.fadeAlpha = 1;
-              // Also display final message for a while
               finalMessage = "You are the strongest...";
               finalMessageTimer = 180;
             }
@@ -296,13 +316,12 @@
           enemyProjectiles[i].x -= enemyProjectiles[i].speed;
           if (enemyProjectiles[i].x + enemyProjectiles[i].width < 0)
             enemyProjectiles.splice(i, 1);
-          // Check collision with hamster
           if (rectIntersect(enemyProjectiles[i], hamster)) {
             console.log("Hamster hit!");
             enemyProjectiles.splice(i, 1);
           }
         }
-        // If enemy is fading, reduce its alpha gradually
+        // If enemy is fading, reduce its opacity gradually
         if (enemy.fading) {
           enemy.fadeAlpha -= 0.01;
           if (enemy.fadeAlpha <= 0) {
@@ -311,33 +330,26 @@
         }
       }
 
-      // --- Update boss ult timer ---
-      if (bossUltTimer > 0) {
-        bossUltTimer--;
-      }
-
-      // --- Update final message timer ---
-      if (finalMessageTimer > 0) {
-        finalMessageTimer--;
-      }
+      // Update boss ult timer
+      if (bossUltTimer > 0) bossUltTimer--;
+      // Update final message timer
+      if (finalMessageTimer > 0) finalMessageTimer--;
     }
 
     function drawGame() {
-      // Clear canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      // --- Draw Tiled Background (Clouds moving slowly) ---
+      // Draw background: 10 rows of small, tiled clouds
       drawBackground();
-      // --- Draw Hamster ---
+      // Draw hamster sprite
       ctx.drawImage(hamsterImg, hamster.x, hamster.y, hamster.width, hamster.height);
-      // --- Draw Hamster Projectiles ---
+      // Draw hamster projectiles (green)
       ctx.fillStyle = "green";
       projectiles.forEach(proj => {
         ctx.fillRect(proj.x, proj.y, proj.width, proj.height);
       });
-      // --- Draw Enemy (Boss) if exists ---
+      // Draw enemy if exists
       if (enemy) {
         ctx.save();
-        // If enemy is fading, use its fadeAlpha
         if (enemy.fading) {
           ctx.globalAlpha = enemy.fadeAlpha;
         }
@@ -346,23 +358,23 @@
         ctx.scale(-1, 1);
         ctx.drawImage(bossImg, -enemy.width / 2, -enemy.height / 2, enemy.width, enemy.height);
         ctx.restore();
-        // Draw enemy message (if any) above enemy's head
+        // Draw enemy message above its head (if any)
         if (enemy.message) {
           ctx.font = "20px Arial";
           ctx.fillStyle = "black";
           ctx.fillText(enemy.message, enemy.x, enemy.y - 10);
         }
       }
-      // --- Draw Enemy Projectiles ---
+      // Draw enemy projectiles
       enemyProjectiles.forEach(proj => {
         ctx.fillStyle = proj.color;
         ctx.fillRect(proj.x, proj.y, proj.width, proj.height);
       });
-      // --- Draw Boss Ult Overlay if active ---
+      // Draw boss ult overlay if active
       if (bossUltTimer > 0) {
         ctx.drawImage(bossUltImg, 0, 0, canvas.width, canvas.height);
       }
-      // --- Draw Final Message if any ---
+      // Draw final message if active
       if (finalMessageTimer > 0) {
         ctx.font = "30px Arial";
         ctx.fillStyle = "black";
@@ -370,32 +382,43 @@
       }
     }
 
+    // New background drawing: 10 rows of small clouds
     function drawBackground() {
-      // Draw the background image (the cloud) tiled horizontally.
-      // (We assume the image covers the full canvas width when drawn at canvas.width)
-      ctx.drawImage(backgroundImg, bgOffset, 0, canvas.width, canvas.height);
-      ctx.drawImage(backgroundImg, bgOffset + canvas.width, 0, canvas.width, canvas.height);
+      // Set a more transparent alpha for the small clouds
+      ctx.globalAlpha = 0.3;
+      const numRows = 10;
+      const rowHeight = canvas.height / numRows;
+      // Determine how many columns are needed to fill the width
+      const cols = Math.ceil(canvas.width / cloudDrawWidth) + 1;
+      for (let r = 0; r < numRows; r++) {
+        let y = r * rowHeight + (rowHeight - cloudDrawHeight) / 2;
+        for (let c = 0; c < cols; c++) {
+          // x position is shifted by the global bgOffset
+          let x = c * cloudDrawWidth + bgOffset;
+          ctx.drawImage(cloudImg, x, y, cloudDrawWidth, cloudDrawHeight);
+        }
+      }
+      ctx.globalAlpha = 1; // restore full opacity
     }
 
     function spawnEnemy() {
-      // Spawn enemy with 20 health, positioned near the right edge
       enemy = {
-        x: canvas.width - 100, // appear near the right side
+        x: canvas.width - 100,
         y: Math.random() * (canvas.height - 100),
         width: 100,
         height: 100,
         health: 20,
-        speed: 0,           // horizontal speed is 0; it only moves vertically
+        speed: 0,           // enemy moves only vertically now
         shootTimer: 60,
         message: "grace, yowai mo",
-        messageTimer: 120,  // display the message for 120 frames
+        messageTimer: 120,
         ultDisplayed: false,
-        fading: false
+        fading: false,
+        targetY: null
       };
     }
 
     function shootEnemyProjectile() {
-      // Choose a random color from blue, red, or purple
       const colors = ["blue", "red", "purple"];
       let color = colors[Math.floor(Math.random() * colors.length)];
       let size = (enemy.health <= 5 && color === "purple") ? 20 : 10;
@@ -409,7 +432,7 @@
       });
     }
 
-    // Utility: Rectangle Intersection
+    // Utility function: rectangle intersection
     function rectIntersect(r1, r2) {
       return !(
         r2.x > r1.x + r1.width ||
